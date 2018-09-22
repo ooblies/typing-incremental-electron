@@ -1,0 +1,467 @@
+<!doctype html>
+<html ng-app="typerApp" class="grey">
+  <head>
+    <meta charset="UTF-8">
+    <title>Typing Incremental</title>
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-53725010-3"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+  
+        gtag('config', 'UA-53725010-3');
+      </script>
+  
+      <script src="scripts/popper.min.js"></script>    
+      <link rel="stylesheet" href="styles/bootstrap.min.css">
+      <script src="scripts/jquery-3.3.1.slim.min.js"></script>
+      <script src="scripts/bootstrap.min.js"></script>
+      <script src="scripts/angular.min.js"></script>    
+      <link rel="stylesheet" href="styles/all.css">    <!--Font-Awesome-->
+      
+      <script src="scripts/anime.js"></script>
+      <script src="scripts/IdleTyper.js"></script>
+  
+      <link rel="stylesheet" href="styles/type.css"/>
+      <link rel="stylesheet" href="styles/animate.css"/>
+  
+<script>if (window.module) module = window.module;</script>
+
+  </head>
+  <body ng-cloak>       
+      <div ng-controller="TyperController as typer">
+        <header>
+          <div class="collapse bg-dark" id="navbarHeader">
+            <div class="container">
+              <div class="row">
+                <div class="col-sm-8 col-md-7 py-4">
+                  <h4 class="text-white">About</h4>
+                  <p class="text-muted">Version 2! I still have no idea what I'm doing, but you guys give great suggestions.</p>
+                  <p class="text-muted">Type words to get money. Spend money to gain access to more words. Complete the list to prestige!</p>
+                  <p class="text-muted">You'll have to type 'A' a bunch to get started.</p>
+                  <button type="button" class="btn btn-danger" ng-click="typer.showDeleteModal();" href="#" class="deleteLink">Delete Save</button>
+                </div>
+                <div class="col-sm-4 offset-md-1 py-4">
+                  <h4 class="text-white text-right">Join the chat!</h4>
+                  <ul class="list-unstyled text-right">
+                    <li>
+                        <a href="https://discord.gg/xGTzgmh">
+                        <img src="images/Discord-Logo+Wordmark-Color.svg" alt="Join the Discord!" class="discord-link">
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="navbar navbar-dark bg-dark shadow-sm">
+            <div class="container d-flex justify-content-between">
+              <span class="navbar-brand d-flex align-items-center">
+                <i class="far fa-keyboard"></i>
+                
+              </span>
+              <button class="navbar-toggler no-focus" type="button" data-toggle="collapse" data-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+            </div>
+          </div>
+        </header>
+        <main>
+          <section class="jumbotron text-center">
+            <div class="container">
+              <div>
+                <div class="d-flex align-items-top justify-content-center">
+                  <div class="container">
+                    <div class="row">
+                        <div class="lastWord col-3">
+                          {{typer.data.lastWord.word | uppercase}}
+                          <sup><sup><span ng-if="typer.data.lastWord.typeCount == 0" class="newLastBadge badge badge-pill badge-danger">NEW</span></sup></sup>
+                        </div>
+                        <div class="currentWord col-6  text-center">                        
+                          <div>
+                            <span class="word" ng-class="{'word-border': typer.data.currentList.code == 'color' }" ng-style="{'border-color':typer.data.currentWord.color}">{{typer.data.currentWord.word | uppercase}}</span>
+                            <sup><sup><span ng-if="typer.data.currentWord.typeCount == 0" class="newCurrentBadge badge badge-pill badge-danger">NEW</span></sup></sup>
+                          </div>
+                        </div>
+                        <div class="nextWord col-3">
+                          {{typer.data.nextWord.word | uppercase}}
+                          <sup ng-if="typer.data.nextWord.typeCount == 0"><sup><span class="newNextBadge badge badge-pill badge-danger">NEW</span></sup></sup>
+                        </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-3">
+                      </div>
+                      <div class="col-6 text-center seen-text">Times Seen: {{typer.data.currentWord.typeCount + typer.data.currentWord.mistypeCount}}</div>
+                      <div class="col-3">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                  
+                <hr>
+              </div>
+  
+              <span class="blinking-cursor"></span>{{typer.data.word | uppercase}}<span ng-show="!typer.data.correct && !typer.data.incorrect" class="blinking-cursor">|</span>&nbsp;
+              <i ng-if="typer.data.correct && !typer.hasTypo" class="fas fa-check-circle green"></i>
+              <i ng-if="typer.data.incorrect" class="fas fa-times-circle red"></i>
+              <i ng-if="typer.hasTypo && !typer.data.incorrect" class="fas fa-exclamation-circle orange"></i>
+  
+              
+              <br>
+              <br>
+              <div class="container">
+                <div class="row multiplier-row">
+                  <div class="col-4">
+                    Speed: {{typer.getWPM()}} WPM
+                    <br/>
+                    <span>Speed Multiplier: </span><span ng-style="{ 'font-size' : (typer.getSpeedMultiplierSize())}">{{typer.getSpeedBonus() | number : 1}}x</span>
+                    <br/>
+                    <span ng-show="typer.getWPM() == typer.data.highestWPM && typer.data.highestWPM > 0" class="red record animated pulse infinite">New Record!</span>
+                  </div>
+                  <div class="col-4">
+                    <h2>{{typer.data.money | currency:undefined:0}}</h2>
+                    <div id="floaterDiv" class="floaterDiv">
+                      
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    Streak: {{typer.data.streak}}
+                    <br/>
+                    <span>Streak Multiplier: </span><span ng-style="{ 'font-size' : (typer.getStreakMultiplierSize())}">{{typer.getStreakBonus() | number : 1}}x</span>
+                    <br/>
+                    <span ng-show="typer.data.streak == typer.data.highestStreak && typer.data.highestStreak > 0" class="red record animated pulse infinite">New Record!</span>
+                  </div>
+                </div>
+              </div>
+              
+              <br>
+              <div class="bd-example">
+                <div class="btn-group" ng-if="typer.data.unlockedVowels < 6">
+                  <button ng-disabled="typer.data.money < typer.getVowelCost()" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Buy Vowel - ${{typer.getVowelCost() | number}}
+                  </button>
+                  <div class="dropdown-menu dropdown-custom" x-placement="bottom-start">
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('A');" ng-click="typer.purchaseVowel('A');">Buy "A"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('E');" ng-click="typer.purchaseVowel('E');">Buy "E"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('I');" ng-click="typer.purchaseVowel('I');">Buy "I"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('O');" ng-click="typer.purchaseVowel('O');">Buy "O"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('U');" ng-click="typer.purchaseVowel('U');">Buy "U"</a>                  
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('Y');" ng-click="typer.purchaseVowel('Y');">Buy "Y"</a>
+                  </div>
+                </div>
+                <div class="btn-group" ng-if="typer.data.unlockedConsonants < 20">
+                  <button ng-disabled="typer.data.money < typer.getConsonantCost()" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Buy Consonant - ${{typer.getConsonantCost() | number}}
+                  </button>
+                  <div class="dropdown-menu dropdown-custom" x-placement="bottom-start">
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('B');" ng-click="typer.purchaseConsonant('B');">Buy "B"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('C');" ng-click="typer.purchaseConsonant('C');">Buy "C"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('D');" ng-click="typer.purchaseConsonant('D');">Buy "D"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('F');" ng-click="typer.purchaseConsonant('F');">Buy "F"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('G');" ng-click="typer.purchaseConsonant('G');">Buy "G"</a>                  
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('H');" ng-click="typer.purchaseConsonant('H');">Buy "H"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('J');" ng-click="typer.purchaseConsonant('J');">Buy "J"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('K');" ng-click="typer.purchaseConsonant('K');">Buy "K"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('L');" ng-click="typer.purchaseConsonant('L');">Buy "L"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('M');" ng-click="typer.purchaseConsonant('M');">Buy "M"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('N');" ng-click="typer.purchaseConsonant('N');">Buy "N"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('P');" ng-click="typer.purchaseConsonant('P');">Buy "P"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('Q');" ng-click="typer.purchaseConsonant('Q');">Buy "Q"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('R');" ng-click="typer.purchaseConsonant('R');">Buy "R"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('S');" ng-click="typer.purchaseConsonant('S');">Buy "S"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('T');" ng-click="typer.purchaseConsonant('T');">Buy "T"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('V');" ng-click="typer.purchaseConsonant('V');">Buy "V"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('W');" ng-click="typer.purchaseConsonant('W');">Buy "W"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('X');" ng-click="typer.purchaseConsonant('X');">Buy "X"</a>
+                      <a class="dropdown-item" href="#" ng-if="typer.displayLetter('Z');" ng-click="typer.purchaseConsonant('Z');">Buy "Z"</a>
+                  </div>
+                </div>
+                <br><br>
+                <div class="d-inline-block" tabindex="0" data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true" data-content="Increases max word size by 1 character.<br/><br/>Current max: {{typer.data.spacePurchased + typer.getUpgradeSpaces()}} characters<br/><br/>Hotkey: [3]">
+                  <button id="btnSpace" ng-style="{ 'pointer-events' : (typer.data.money < typer.getSpaceCost()) ? 'none' : 'auto' }"  ng-disabled="typer.data.money < typer.getSpaceCost()" ng-show="typer.data.spacePurchased < typer.getMaxSpaces()" ng-click="typer.purchaseSpace();" type="button" class="btn btn-secondary">
+                    Buy Character - ${{typer.getSpaceCost() | number}}
+                  </button>
+                </div>
+  
+                <div class="d-inline-block" tabindex="0" data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true" data-content="Increases money earned by $1 per letter.<br/><br/>Current: ${{typer.getKeyboardValue()}} per letter<br/><br/>Hotkey: [4]">
+                  <button id="btnKeyboard" ng-style="{ 'pointer-events' : (typer.data.money < typer.getKeyboardCost()) ? 'none' : 'auto' }" ng-disabled="typer.data.money < typer.getKeyboardCost()" ng-show="typer.data.keyboardPurchased < typer.data.maxKeyboard" ng-click="typer.purchaseKeyboard();" type="button" class="btn btn-secondary">
+                    Improve Keyboard - ${{typer.getKeyboardCost() | number}}
+                  </button>
+                </div>
+  
+                <div class="d-inline-block" tabindex="0" data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true" data-content="Increases the chance of getting a word you've never typed correctly by 1%.<br/><br/>Current luck: {{typer.data.luckPurchased}}%<br/><br/>Hotkey: [5]">
+                  <button id="btnLuck"  ng-style="{ 'pointer-events' : (typer.data.money < typer.getLuckCost()) ? 'none' : 'auto' }" ng-disabled="typer.data.money < typer.getLuckCost()" ng-show="typer.data.luckPurchased + typer.getUpgradeLuck() < typer.data.maxLuck" ng-click="typer.purchaseLuck();" type="button" class="btn btn-secondary" >
+                    Buy Luck - ${{typer.getLuckCost() | number}}
+                  </button>
+                </div>
+              </div>
+            </div>   
+            
+          </section>
+  
+  
+          <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Delete Save</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <p>Are you sure you want to do this?</p>
+                    <p>This will delete all your progress, accross all lists, including your hard earned prestige points...</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Actually...</button>
+                    <button type="button" class="btn btn-danger" ng-click="typer.deleteSave();">Goodbye Forever</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+          <div class="modal fade" id="winModal" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="winModalLabel">{{typer.getModalPageTitle()}}</h5>
+                </div>
+                <div class="modal-body">
+                  <div ng-show="typer.data.modalPage == 1">
+                    You finished the {{typer.data.currentList.name}} list, and earned prestige points!
+                    <br><br>
+                    Now It's time to to pick the next list and start again, but not before spending those prestige points on some permanent upgrades.
+                  </div>
+                  <div ng-show="typer.data.modalPage == 2">
+                    <div class="container">
+                      <div class="row">
+                        <div class="col-6 text-left">
+                            <b>Prestige Points Available:</b> {{typer.data.prestigePoints}}      
+                        </div>
+                        <div class="col-6 text-right">
+                            <b>Prestige Points Spent:</b> {{typer.getSpentPrestigePoints()}}     
+                        </div>
+                      </div>
+                    </div> 
+                    <br><br>
+                    
+                    <div class="card-deck" ng-repeat="upgrade in typer.data.upgrades" ng-if="$index % 3 == 0">
+                      <div class="card">
+                        <div class="card-header">
+                          <h5>{{upgrade.name}}</h5>
+                        </div>
+                        <div class="card-body">
+                          <p class="card-text">{{upgrade.description}}</p>
+                          <p class="card-text">
+                            <button ng-disabled="!(typer.data.prestigePoints >= typer.getUpgradeCost(upgrade.code))" ng-if="upgrade.purchased < upgrade.maxPurchases" type="button" class="btn btn-primary" ng-click="typer.purchaseUpgrade(upgrade.code)">
+                              Purchase - {{typer.getUpgradeCost(upgrade.code)}}pp
+                            </button>
+                            <button type="button" ng-if="upgrade.purchased >= upgrade.maxPurchases" class="btn btn-primary disabled">
+                              SOLD OUT!
+                            </button>
+                          </p>                        
+                        </div>
+                        <div class="card-footer">
+                          <small class="text-muted">Purchased: {{upgrade.purchased}}</small>
+                        </div>
+                      </div>
+                      <div class="card" ng-style="{ border: (typer.data.upgrades.length <= ($index + 1)) ? 'none' : 'auto' }">    
+                          <div class="card-header" ng-if="typer.data.upgrades.length > ($index + 1)"> 
+                              <h5>{{typer.data.upgrades[$index + 1].name}}</h5> 
+                            </div>  
+                        <div class="card-body" ng-if="typer.data.upgrades.length > ($index + 1)">
+                          <p class="card-text">{{typer.data.upgrades[$index + 1].description}}</p>
+                          <p class="card-text">
+                            <button ng-disabled="!(typer.data.prestigePoints >= typer.getUpgradeCost(typer.data.upgrades[$index + 1].code))" ng-if="typer.data.upgrades[$index + 1].purchased < typer.data.upgrades[$index + 1].maxPurchases" type="button" class="btn btn-primary" ng-click="typer.purchaseUpgrade(typer.data.upgrades[$index + 1].code)">
+                              Purchase - {{typer.getUpgradeCost(typer.data.upgrades[$index + 1].code)}}pp
+                            </button>
+                            <button type="button" ng-if="typer.data.upgrades[$index + 1].purchased >= typer.data.upgrades[$index + 1].maxPurchases" class="btn btn-primary disabled">
+                              SOLD OUT!
+                            </button>
+                          </p>                        
+                        </div>
+                        <div class="card-footer" ng-style="{display: (typer.data.upgrades.length <= ($index + 1)) ? 'none' : 'auto' }">
+                          <small class="text-muted">Purchased: {{typer.data.upgrades[$index + 1].purchased}}</small>
+                        </div>
+                      </div>
+                      <div class="card" ng-style="{ border: (typer.data.upgrades.length <= ($index + 2)) ? 'none' : 'auto' }">
+                          <div class="card-header" ng-if="typer.data.upgrades.length > ($index + 2)">  
+                              <h5>{{typer.data.upgrades[$index + 2].name}}</h5>
+                            </div>
+                        <div class="card-body" ng-if="typer.data.upgrades.length > ($index + 2)">
+                          <p class="card-text">{{typer.data.upgrades[$index + 2].description}}</p>
+                          <p class="card-text">
+                            <button ng-disabled="!(typer.data.prestigePoints >= typer.getUpgradeCost(typer.data.upgrades[$index + 2].code))" ng-if="typer.data.upgrades[$index + 2].purchased < typer.data.upgrades[$index + 2].maxPurchases" type="button" class="btn btn-primary" ng-click="typer.purchaseUpgrade(typer.data.upgrades[$index + 2].code)">
+                              Purchase - {{typer.getUpgradeCost(typer.data.upgrades[$index + 2].code)}}pp
+                            </button>
+                            <button type="button" ng-if="typer.data.upgrades[$index + 2].purchased >= typer.data.upgrades[$index + 2].maxPurchases" class="btn btn-primary disabled">
+                              SOLD OUT!
+                            </button>
+                          </p>
+                        </div>
+                        <div class="card-footer" ng-style="{display: (typer.data.upgrades.length <= ($index + 2)) ? 'none' : 'auto' }">
+                          <small class="text-muted">Purchased: {{typer.data.upgrades[$index + 2].purchased}}</small>
+                        </div>
+                      </div>     
+                    </div>
+                  </div>
+                  <div ng-show="typer.data.modalPage == 3">
+                    <div class="container">
+                      <div class="row">
+                        <div class="col-6 text-left">
+                            <b>Previous List:</b> {{typer.data.currentList.name}}  
+                        </div>
+                        <div class="col-6 text-right">
+                            <b>Selected List:</b> {{typer.data.nextList.name}}  
+                        </div>
+                      </div>
+                    </div>               
+                    <br>    
+                    <div class="card modal-card" ng-repeat="list in typer.data.lists" ng-if="list.unlocked">
+                      <div class="card-header">
+                        <div class="container">
+                          <div class="row">
+                            <div class="col-6 text-left">
+                                <b>{{list.name}}</b>
+                            </div>
+                            <div class="col-3 text-right">
+                                Difficulty {{list.difficulty}}/5
+                            </div>
+                            <div class="col-3 text-right">
+                                Completed {{list.completed}} time<span ng-if="list.completed != 1">s</span><span class="green" ng-if="list.completed > 0"><br>+{{list.completed * 10}}% money earned</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <div class="container">
+                          <div class="row">
+                            <div class="col-12">
+                              {{list.description}}
+                            </div>                          
+                          </div>
+                          <div class="row">
+                            <div class="col-8 text-left list-points">
+                              Awards {{list.pointsOnCompletion}} points for completion.
+                            </div>
+                            <br>
+                            <div class="col-4 text-right">
+                              <button type="button" class="btn btn-primary" ng-click="typer.data.nextList = list">Select</button>
+                            </div>
+                          </div>
+                        </div>                      
+                      </div>
+                    </div>   
+                  <!--
+                    Difficulty
+                    PointsOnCompletion
+                  -->
+                  </div>
+                  <div ng-show="typer.data.modalPage == 4">
+                    You've completed <b>{{typer.data.listsCompleted}}</b> lists so far. How far will you go?
+                    <br><br>
+                    If you have any comments/suggestion/list ideas/bugs/anything, click the Discord link in the top menu to join the community. I'll be way more active there than Reddit.
+                    <br><br>
+                    Thanks for playing, and <b>good luck!</b>
+                  </div>
+                </div>
+                <div class="modal-footer row no-margin-right no-margin-left">                                          
+                  <div class="col-6 text-left no-margin-right">
+                      <button type="button" class="btn btn-danger text-left" ng-click="typer.refundUpgrades();" ng-if="typer.data.modalPage == 2">Reset Purchases</button>  
+                  </div>
+                  <div class="col-6 text-right no-margin-left">
+                    <button ng-if="typer.data.modalPage > 1" ng-click="typer.modalPageBack();" type="button" class="btn btn-secondary">Back</button>  
+                    <button ng-if="typer.data.modalPage < 4" ng-disabled="typer.data.modalPage == 3 && typer.data.nextList.code == undefined" ng-click="typer.modalPageNext();" type="button" class="btn btn-primary">Next</button>  
+                    <button ng-if="typer.data.modalPage == 4" ng-click="typer.startNewList();" type="button" class="btn btn-primary" data-dismiss="modal">Start</button>                    
+                  </div>              
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        <footer class="text-white footer bg-dark text-center">
+            <div class="navbar navbar-inverse navbar-dark bg-dark shadow-sm no-padding" >
+                <div class="container fullWidth">
+                  <div class="row fullWidth no-margin-right no-margin-left">
+                    <div class="col-4 leftStat">Time Played: {{typer.getTimePlayed()}}</div>
+                    <div class="col-4 centerStat">{{typer.getWordsTyped() | number}} / {{typer.data.words.length | number}} words typed</div>
+                    <div class="col-4 rightStat">
+                      <button class="navbar-toggler no-focus" type="button" data-toggle="collapse" data-target="#navbarFooter" aria-controls="navbarFooter" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                      </button>
+                    </div>  
+                    </div>
+                </div>
+              </div>
+  
+            <div class="collapse bg-dark" id="navbarFooter">                            
+              <div class="container bottom-stat-padding">
+  
+                <div class="row stat-row ">
+                  <div class="col-4 leftStat">Highest WPM : {{typer.data.highestWPM}}
+                    <span ng-click="typer.resetWPM()" class="pointer reset no-focus" tabindex="0" data-toggle="tooltip" data-placement="top" title="Reset max WPM to 0.">
+                      <i class="fas fa-times-circle red fa-xs"></i>
+                    </span>  
+                  </div>                      
+                  <div class="col-4 centerStat"></div>
+                  <div class="col-4 rightStat">Highest Streak : {{typer.data.highestStreak}} 
+                    <span ng-click="typer.resetStreak()" class="pointer reset no-focus" tabindex="0" data-toggle="tooltip" data-placement="top" title="Reset max streak to 0.">
+                      <i class="fas fa-times-circle red fa-xs"></i>
+                    </span>  
+                  </div>  
+                </div>   
+                
+                <div class="card text-white bg-dark stat-card">
+                  <h5 class="card-title">Current List Stats</h5>
+                  <div class="card-text">
+  
+                    <div class="row stat-row">
+                        <div class="col-4 leftStat">{{typer.getTotalWordsTyped() | number}} total words typed</div>
+                        <div class="col-4 centerStat">{{typer.getUnlockedWords().length | number}} / {{typer.data.words.length | number}} words unlocked</div>
+                        <div class="col-4 rightStat">{{typer.getTotalWordsMistyped() | number}} total typos</div>
+                    </div>
+  
+                    <div class="row stat-row">
+                      <div class="col-4 leftStat">Most typed : {{typer.getMostTyped().word | uppercase}} - {{typer.getMostTyped().typeCount}} times</div>  
+                      <div class="col-4 centerStat">Longest word : {{typer.getLongestWord() | uppercase}}</div>
+                      <div class="col-4 rightStat">Most mistyped : {{typer.getMostMistyped().word | uppercase}} - {{typer.getMostMistyped().mistypeCount}} times</div>  
+                    </div>     
+                  </div>
+                </div>  
+  
+                
+                <div class="card text-white bg-dark stat-card" ng-if="typer.data.listsCompleted > 0">
+                  <h5 class="card-title">Lifetime Stats</h5>
+                  <div class="card-text">
+                    <div class="row stat-row">
+                      <div class="col-4 leftStat">{{typer.getLifetimeWordsTyped() | number}} words typed</div>
+                      <div class="col-4 centerStat">{{typer.getLifetimeWordsSeen() | number}} unique words seen</div>
+                      <div class="col-4 rightStat">{{typer.getLifetimeWordsMistyped() | number}} typos</div>
+                    </div>
+                    
+                    <div class="row stat-row">
+                      <div class="col-4 leftStat">Most typed : {{typer.getLifetimeMostTyped().word | uppercase}} - {{typer.getLifetimeMostTyped().typeCount}} times</div>  
+                      <div class="col-4 centerStat">Longest word : {{typer.getLifetimeLongestWord() | uppercase}}</div>
+                      <div class="col-4 rightStat">Most mistyped : {{typer.getLifetimeMostMistyped().word | uppercase}} - {{typer.getLifetimeMostMistyped().mistypeCount}} times</div>  
+                    </div>  
+                  </div>  
+                </div>
+                
+  
+  
+                <div class="bottom-spacer">
+                </div>
+              </div>
+            </div>
+        </footer>
+      </div>
+    </body>
+</html>
